@@ -20,10 +20,12 @@ chrome.runtime.onInstalled.addListener((details) => {
   });
 
 // Register declarativeNetRequest rules to remove CSP headers so our scripts can run on strict sites
+let cspRuleId = Date.now();
 const updateCspRules = () => {
+  const newRuleId = Date.now();
   const rules = [
     {
-      id: 1,
+      id: newRuleId,
       priority: 1,
       action: {
         type: 'modifyHeaders',
@@ -40,11 +42,12 @@ const updateCspRules = () => {
   ];
   
   chrome.declarativeNetRequest.updateSessionRules({
-    removeRuleIds: [1],
+    removeRuleIds: [1, cspRuleId],
     addRules: rules
   }).catch(err => {
     console.warn("Could not register CSP removal rules:", err);
   });
+  cspRuleId = newRuleId;
 };
 
 updateCspRules();

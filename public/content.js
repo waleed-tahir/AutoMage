@@ -845,7 +845,7 @@ window.addEventListener('message', (event) => {
   }
 });
 
-const isStableId = (id) => {
+function isStableId(id) {
   if (!id || typeof id !== 'string') return false;
   if (/^\d/.test(id)) return false; 
   if (/\d{4,}/.test(id)) return false; 
@@ -853,17 +853,17 @@ const isStableId = (id) => {
   if (id.includes('ember') || id.includes('react') || id.includes('vue') || id.includes('angular') || id.includes('next')) return false; 
   if (/[a-f0-9]{8,}/i.test(id)) return false; 
   return true;
-};
+}
 
-const isDynamicClass = (c) => {
+function isDynamicClass(c) {
   if (!c || typeof c !== 'string') return true;
   if (/^(css|jss|ng|vue|react|ember)-/.test(c)) return true;
   if (/^[a-z0-9]{4,10}$/i.test(c) && /\d/.test(c)) return true; 
   if (/[a-f0-9]{8,}/i.test(c)) return true; 
   return false;
-};
+}
 
-const isCommonUtilityClass = (c) => {
+function isCommonUtilityClass(c) {
   if (!c || typeof c !== 'string') return true;
   const commonTailwind = [
     'flex', 'grid', 'block', 'inline', 'hidden', 'absolute', 'relative', 'fixed', 'sticky',
@@ -876,9 +876,9 @@ const isCommonUtilityClass = (c) => {
     'font-', 'leading-', 'tracking-', 'text-center', 'text-left', 'text-right'
   ];
   return commonTailwind.some(prefix => c.startsWith(prefix));
-};
+}
 
-const getStableAttributeSelector = (element) => {
+function getStableAttributeSelector(element) {
   const tag = element.tagName.toLowerCase();
   
   for (const attr of ['data-testid', 'data-test', 'data-qa', 'data-cy']) {
@@ -908,9 +908,9 @@ const getStableAttributeSelector = (element) => {
   }
   
   return null;
-};
+}
 
-const generateSelector = (el) => {
+function generateSelector(el) {
   if (!el) return '';
   
   // 1. Traverse up to the closest interactive element
@@ -1227,8 +1227,9 @@ async function playMacro(events) {
       } catch {
         // Ignore element access errors
       }
-      const parsedDelay = (evt.delay !== undefined && evt.delay !== null && evt.delay !== '') ? parseInt(evt.delay) : NaN;
-      const currentDelay = (isNaN(parsedDelay) || parsedDelay < 0) ? stepDelay : parsedDelay;
+      if (evt.delay == null || evt.delay === '') evt.delay = stepDelay;
+      let currentDelay = parseInt(evt.delay);
+      if (isNaN(currentDelay) || currentDelay < 0) currentDelay = stepDelay;
       
       // Sleep delay with incremental cancellation checks
       let elapsed = 0;
