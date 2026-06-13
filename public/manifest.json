@@ -1,0 +1,41 @@
+{
+    "manifest_version": 3,
+    "name": "Automage",
+    "version": "2.5.0",
+    "description": "AI-powered web automation, macros, and layout modifications.",
+    "action": {
+    "default_popup": "index.html",
+    "default_title": "Open Automage"
+    },
+    "background": {
+    "service_worker": "background.js",
+    "type": "module"
+    },
+    "content_scripts": [
+    {
+    "matches": ["<all_urls>"],
+    "js": ["content.js"],
+    "run_at": "document_idle"
+    }
+    ],
+    "permissions": [
+      "storage",
+      "activeTab",
+      "scripting",
+      "tabs",
+      "declarativeNetRequest"
+    ],
+    "host_permissions": [
+      "<all_urls>",
+      "https://api.openai.com/",
+      "https://api.anthropic.com/",
+      "https://api.x.ai/",
+      "http://localhost:11434/*"
+    ],
+    "web_accessible_resources": [
+      {
+        "resources": ["injected_bridge.js"],
+        "matches": ["<all_urls>"]
+      }
+    ]
+}
