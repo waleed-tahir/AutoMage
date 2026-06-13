@@ -1134,10 +1134,13 @@ export default function App() {
                              ) : null}
                           </div>
                         </div>
-                        <ToggleSwitch 
-                          checked={mod.active} 
-                          onChange={() => setMods(mods.map(m => m.id === mod.id ? {...m, active: !m.active} : m))} 
-                        />
+                        <div className="flex items-center gap-2" title="Toggle Auto-Run on page load">
+                          <span className="text-[10px] text-zinc-500 font-medium">Auto-Run</span>
+                          <ToggleSwitch 
+                            checked={mod.active} 
+                            onChange={() => setMods(mods.map(m => m.id === mod.id ? {...m, active: !m.active} : m))} 
+                          />
+                        </div>
                       </div>
                       
                       <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity pt-1 border-t border-zinc-800/40">

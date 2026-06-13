@@ -144,10 +144,11 @@ Your task: Given the target page URL, observed DOM structure, and the user’s r
 Key constraints & best practices:
 
 1. Dynamic DOM handling
-- The target page loads or modifies elements after window.load (e.g., React/Vue apps, infinite scroll, AJAX).
-- Never rely on window.load or simple DOMContentLoaded alone – many elements won’t exist yet.
-- Use MutationObserver to watch for the appearance of specific elements, then apply styling or automation.
-- Implement a retry / wait‑for‑element helper function if a simple observer is overkill (prefer MutationObserver for performance).
+- IMPORTANT: Your script must work both when injected at page load AND when manually executed later.
+- First, immediately select and process any matching elements currently in the DOM.
+- Then, set up a MutationObserver to catch any future elements that appear (e.g., infinite scroll, AJAX).
+- Never rely on window.load or simple DOMContentLoaded alone.
+- Implement a retry / wait-for-element helper function if a simple observer is overkill.
 
 2. Tampermonkey‑specific requirements
 - Include a proper // ==UserScript== header block with:
