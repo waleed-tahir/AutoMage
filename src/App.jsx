@@ -56,9 +56,9 @@ const CloudIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" wid
 const TrashIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>;
 
 const ToggleSwitch = ({ checked, onChange }) => (
-  <label className="relative inline-flex items-center cursor-pointer">
+  <label className="relative inline-flex items-center cursor-pointer select-none">
     <input type="checkbox" className="sr-only peer" checked={checked} onChange={onChange} />
-    <div className="w-7 h-4 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-300 after:transition-all peer-checked:bg-blue-500"></div>
+    <div className="w-9 h-5 bg-zinc-800 rounded-full peer peer-checked:bg-indigo-600 transition-colors duration-200 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4 peer-checked:after:bg-white"></div>
   </label>
 );
 
