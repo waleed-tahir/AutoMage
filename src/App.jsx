@@ -79,6 +79,13 @@ export default function App() {
   const [rawMods, setMods] = useChromeStorage('mods', []);
   const mods = Array.isArray(rawMods) ? rawMods : [];
   
+  // GitHub Sync State
+  const [githubToken, setGithubToken] = useChromeStorage('githubToken', '');
+  const [githubRepo, setGithubRepo] = useChromeStorage('githubRepo', '');
+  const [githubBranch, setGithubBranch] = useChromeStorage('githubBranch', 'main');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [showGithubToken, setShowGithubToken] = useState(false);
+  
   // PERSISTENT RECORDING STATE
   const [isRecording, setIsRecording] = useChromeStorage('isRecording', false);
   const [rawRecordedEvents, setRecordedEvents] = useChromeStorage('recordedEvents', []);
@@ -487,6 +494,83 @@ export default function App() {
     setScriptKeybinding('');
     setMacroEvents([]);
     setEditingScriptId(null);
+  };
+  const pullFromGithub = async () => {
+    if (!githubToken || !githubRepo || !githubBranch) {
+      return showNotification("Please fill in all GitHub Sync fields.", "error");
+    }
+    setIsSyncing(true);
+    try {
+      const res = await fetch(`https://api.github.com/repos/${githubRepo}/contents/automage-scripts.json?ref=${githubBranch}`, {
+        headers: {
+          'Authorization': `token ${githubToken}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      if (!res.ok) {
+        throw new Error(`GitHub API Error: ${res.statusText}`);
+      }
+      const data = await res.json();
+      const contentStr = decodeURIComponent(escape(atob(data.content)));
+      const parsedMods = JSON.parse(contentStr);
+      if (Array.isArray(parsedMods)) {
+        setMods(parsedMods);
+        showNotification("Scripts pulled successfully from GitHub!", "success");
+      } else {
+        throw new Error("Invalid format in GitHub repository.");
+      }
+    } catch (err) {
+      console.error(err);
+      showNotification(`Pull failed: ${err.message}`, "error");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const pushToGithub = async () => {
+    if (!githubToken || !githubRepo || !githubBranch) {
+      return showNotification("Please fill in all GitHub Sync fields.", "error");
+    }
+    setIsSyncing(true);
+    try {
+      let sha = undefined;
+      const getRes = await fetch(`https://api.github.com/repos/${githubRepo}/contents/automage-scripts.json?ref=${githubBranch}`, {
+        headers: {
+          'Authorization': `token ${githubToken}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      if (getRes.ok) {
+        const getData = await getRes.json();
+        sha = getData.sha;
+      }
+      
+      const contentBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(mods, null, 2))));
+      const putRes = await fetch(`https://api.github.com/repos/${githubRepo}/contents/automage-scripts.json`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${githubToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: "Sync from AutoMage",
+          content: contentBase64,
+          sha: sha,
+          branch: githubBranch
+        })
+      });
+      if (!putRes.ok) {
+        const errorData = await putRes.json();
+        throw new Error(`GitHub API Error: ${errorData.message || putRes.statusText}`);
+      }
+      showNotification("Scripts pushed successfully to GitHub!", "success");
+    } catch (err) {
+      console.error(err);
+      showNotification(`Push failed: ${err.message}`, "error");
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   return (
@@ -1319,6 +1403,66 @@ export default function App() {
                 className="w-full bg-zinc-950 border border-zinc-800 text-xs px-2.5 py-2 rounded-md focus:outline-none focus:border-blue-500 font-mono text-zinc-300"
               />
               <p className="text-[9px] text-zinc-500">Maximum times the AI compiler will retry fixing syntax/runtime errors (default: 3, max: 10).</p>
+            </div>
+
+            <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-lg p-3.5 space-y-3">
+              <label className="text-xs font-semibold text-zinc-300">GitHub Sync</label>
+              
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-zinc-500">Personal Access Token</label>
+                <div className="relative">
+                  <input 
+                    type={showGithubToken ? 'text' : 'password'} 
+                    value={githubToken} 
+                    onChange={(e) => setGithubToken(e.target.value)} 
+                    placeholder="ghp_..." 
+                    className="w-full bg-zinc-950 border border-zinc-800 text-xs px-2.5 py-2 rounded-md focus:outline-none focus:border-blue-500 font-mono pr-8 text-zinc-300" 
+                  />
+                  <button onClick={() => setShowGithubToken(!showGithubToken)} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
+                    {showGithubToken ? <EyeOffIcon className="w-3.5 h-3.5"/> : <EyeIcon className="w-3.5 h-3.5"/>}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-zinc-500">Repository (e.g., username/repo)</label>
+                <input 
+                  type="text" 
+                  value={githubRepo} 
+                  onChange={(e) => setGithubRepo(e.target.value)} 
+                  placeholder="username/repo" 
+                  className="w-full bg-zinc-950 border border-zinc-800 text-xs px-2.5 py-2 rounded-md focus:outline-none focus:border-blue-500 font-mono text-zinc-300" 
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-zinc-500">Branch</label>
+                <input 
+                  type="text" 
+                  value={githubBranch} 
+                  onChange={(e) => setGithubBranch(e.target.value)} 
+                  placeholder="main" 
+                  className="w-full bg-zinc-950 border border-zinc-800 text-xs px-2.5 py-2 rounded-md focus:outline-none focus:border-blue-500 font-mono text-zinc-300" 
+                />
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <button 
+                  onClick={pushToGithub} 
+                  disabled={isSyncing}
+                  className="flex-1 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 border border-zinc-700 text-xs font-medium py-2 rounded transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <CloudIcon className="w-3.5 h-3.5" /> Push
+                </button>
+                <button 
+                  onClick={pullFromGithub} 
+                  disabled={isSyncing}
+                  className="flex-1 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 border border-zinc-700 text-xs font-medium py-2 rounded transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <CloudIcon className="w-3.5 h-3.5" /> Pull
+                </button>
+              </div>
+              <p className="text-[9px] text-zinc-500 text-center">{isSyncing ? "Syncing..." : "Saves to automage-scripts.json"}</p>
             </div>
 
             <button onClick={() => { setMods([]); setApiKeys({ openai: '', anthropic: '', grok: '', groq: '', gemini: '' }); setLlmProvider('groq'); setRecordedEvents([]); chrome.storage.local.clear(); }} className="mt-auto text-xs font-medium text-red-400 border border-red-500/20 py-2.5 rounded-lg flex justify-center items-center gap-2 cursor-pointer hover:bg-red-500/5 transition-colors"><TrashIcon className="w-3.5 h-3.5" /> Clear Data</button>
