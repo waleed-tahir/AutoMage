@@ -20,9 +20,9 @@ chrome.runtime.onInstalled.addListener((details) => {
   });
 
 // Register declarativeNetRequest rules to remove CSP headers so our scripts can run on strict sites
-let cspRuleId = Date.now();
+let cspRuleId = Math.floor(Math.random() * 1000000000) + 1;
 const updateCspRules = () => {
-  const newRuleId = Date.now();
+  const newRuleId = Math.floor(Math.random() * 1000000000) + 1;
   const rules = [
     {
       id: newRuleId,
